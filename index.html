@@ -120,7 +120,7 @@ body{font-family:var(--font-main);background:var(--bg-secondary);color:var(--tex
       </div>
     </div>
     <button class="btn-p" onclick="startQuiz()" id="start-btn">出題開始</button>
-    <div class="fnav"><a onclick="go('pg-stats')">学習データ</a><a onclick="go('pg-about')">このサイトについて</a></div>
+    <div class="fnav"><a onclick="go('pg-stats')">学習データ</a><a onclick="go('pg-progress')">進捗一覧</a><a onclick="go('pg-about')">このサイトについて</a></div>
   </div>
 </div>
 
@@ -156,6 +156,20 @@ body{font-family:var(--font-main);background:var(--bg-secondary);color:var(--tex
     <h2 style="font-size:18px;font-weight:500;margin-bottom:1.25rem">学習データ</h2>
     <div class="card"><p style="font-size:14px;font-weight:500;color:var(--green-600);margin-bottom:16px">正答率</p><div style="text-align:center;margin-bottom:20px" id="sd"></div><div style="border-top:1px solid var(--border-color);padding-top:16px"><div id="st"></div><div id="sb"></div></div></div>
     <div class="card"><p style="font-size:14px;font-weight:500;color:var(--green-600);margin-bottom:16px">学習推移</p><div id="str"></div><div style="border-top:1px solid var(--border-color);padding-top:14px;margin-top:12px"><div class="cbox" id="scm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green-600)" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><p></p></div></div></div>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<div class="page" id="pg-progress">
+  <div class="anim">
+    <div class="nav-back" onclick="go('pg-top')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green-400)" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg><span>TOPに戻る</span></div>
+    <h2 style="font-size:18px;font-weight:500;margin-bottom:.5rem">進捗一覧</h2>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;flex-wrap:wrap">
+      <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-secondary)"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--green-200)"></span>正解済み</span>
+      <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-secondary)"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--amber-100)"></span>回答のみ</span>
+      <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-secondary)"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--bg-tertiary)"></span>未回答</span>
+    </div>
+    <div id="prog-body"></div>
   </div>
 </div>
 
@@ -236,7 +250,7 @@ function sRS(s){localStorage.setItem('slt-rs',JSON.stringify(s));}
 
 async function ckPw(){const pw=document.getElementById('pw-in').value;if(!pw){document.getElementById('pw-err').style.display='block';return;}document.getElementById('pw-err').style.display='none';userPw=pw;document.getElementById('ld').style.display='flex';try{await loadXL();if(WD.length===0&&PD.length===0)throw new Error('no data');localStorage.setItem('slt-a','1');localStorage.setItem('slt-p',btoa(pw));go('pg-top');}catch(e){console.error(e);document.getElementById('ld').style.display='none';userPw='';WD=[];PD=[];WG=[];PG=[];AY=[];CMT=null;document.getElementById('pw-err').textContent='パスワードが違います';document.getElementById('pw-err').style.display='block';}}
 
-function go(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);if(id==='pg-top')buildTop();if(id==='pg-stats')buildStats();}
+function go(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);if(id==='pg-top')buildTop();if(id==='pg-stats')buildStats();if(id==='pg-progress')buildProgress();}
 
 function buildTop(){buildGP();buildYP();updBtn();}
 function selType(el){document.querySelectorAll('.toggle-item').forEach(t=>t.classList.remove('active'));el.classList.add('active');cType=el.dataset.type;sGenres=new Set(['all']);buildGP();buildYP();updBtn();}
@@ -285,6 +299,71 @@ function buildStats(){
 function stab(t){document.querySelectorAll('.ctab').forEach(e=>{e.classList.toggle('active',(t==='g'&&e.textContent==='ジャンル別')||(t==='y'&&e.textContent==='年度別'));});const d=gLD(),wa=d.answers.filter(a=>a.correct!==null);let cats=t==='g'?WG:AY;let h='';cats.forEach(c=>{const ca=wa.filter(a=>t==='g'?a.type===c:a.year===c),cr=ca.filter(a=>a.correct).length,r=ca.length?Math.round(cr/ca.length*100):0,bc=!ca.length?'var(--bg-tertiary)':r<70?'var(--amber-100)':'var(--green-200)',tc=!ca.length?'var(--text-secondary)':r<70?'var(--amber-600)':'var(--green-600)';h+=`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px">${c}</span><span style="font-size:12px;font-weight:500;color:${tc}">${ca.length?r+'%':'—'}</span></div><div class="pbar-w"><div class="pbar-f" style="width:${r}%;background:${bc}"></div></div></div>`;});document.getElementById('sb').innerHTML=h;}
 function buildTrend(d){const ds=[],td=new Date();for(let i=13;i>=0;i--){const x=new Date(td);x.setDate(x.getDate()-i);ds.push(x.toISOString().slice(0,10));}const cn=ds.map(x=>d.daily[x]||0),mx=Math.max(...cn,1),H=120,W=420,st=W/(ds.length-1);let pl=cn.map((c,i)=>`${Math.round(i*st)},${Math.round(H-20-(c/mx)*(H-40))}`).join(' ');let ci=cn.map((c,i)=>`<circle cx="${Math.round(i*st)}" cy="${Math.round(H-20-(c/mx)*(H-40))}" r="3" fill="var(--green-400)"/>`).join('');let lb=ds.map((x,i)=>i%2===0||i===ds.length-1?`<span style="font-size:11px;color:var(--text-secondary)">${x.slice(5)}</span>`:'<span></span>').join('');document.getElementById('str').innerHTML=`<div style="position:relative;height:${H+20}px"><svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><line x1="0" y1="10" x2="${W}" y2="10" stroke="var(--border-color)" stroke-width=".5" stroke-dasharray="4"/><line x1="0" y1="${H/2}" x2="${W}" y2="${H/2}" stroke="var(--border-color)" stroke-width=".5" stroke-dasharray="4"/><line x1="0" y1="${H-20}" x2="${W}" y2="${H-20}" stroke="var(--border-color)" stroke-width=".5"/><polygon points="${pl} ${W},${H-20} 0,${H-20}" fill="var(--green-400)" opacity=".08"/><polyline points="${pl}" fill="none" stroke="var(--green-400)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${ci}</svg><div style="display:flex;justify-content:space-between;margin-top:2px">${lb}</div></div>`;}
 function buildCmt(d){const wa=d.answers.filter(a=>a.correct!==null);const el=document.querySelector('#scm p');if(!CMT){el.textContent='コメントデータを読み込めませんでした。';return;}const minA=CMT.min_answers||10,minG=CMT.min_genre_answers||3;if(!wa.length){el.textContent=CMT.general.no_data;return;}if(wa.length<minA){el.textContent=CMT.general.few_data.replace('{count}',wa.length);return;}const gr={};WG.forEach(g=>{const ga=wa.filter(a=>a.type===g);if(ga.length>=minG)gr[g]=Math.round(ga.filter(a=>a.correct).length/ga.length*100);});if(!Object.keys(gr).length){el.textContent=CMT.general.insufficient_genres;return;}const allHigh=Object.values(gr).every(v=>v>=80);if(allHigh){el.textContent=CMT.general.all_high;return;}const worst=Object.entries(gr).sort((a,b)=>a[1]-b[1])[0];const genre=worst[0],rate=worst[1];const gc=CMT.comments[genre];if(!gc){el.textContent=`「${genre}」の正答率が${rate}%です。重点的に復習してみましょう。`;return;}let band='81-100';if(rate<=20)band='0-20';else if(rate<=40)band='21-40';else if(rate<=60)band='41-60';else if(rate<=80)band='61-80';el.textContent=gc[band]||`「${genre}」の正答率は${rate}%です。`;}
+
+function buildProgress(){
+  const d=gLD(),allAns=d.answers;
+  // Build sets of answered/correct question IDs
+  const answered=new Set(),correct=new Set();
+  allAns.forEach(a=>{answered.add(a.id);if(a.correct===true)correct.add(a.id);});
+  // Group WD by year then type
+  const yearMap=new Map();
+  WD.forEach(q=>{
+    if(!yearMap.has(q.year))yearMap.set(q.year,new Map());
+    const tm=yearMap.get(q.year);
+    if(!tm.has(q.type))tm.set(q.type,[]);
+    tm.get(q.type).push(q);
+  });
+  // Subject display order
+  const subjOrder=['障害者福祉の基礎知識','聴覚障害者に関する基礎知識','手話通訳の在り方','国語'];
+  const subjShort={'障害者福祉の基礎知識':'福祉','聴覚障害者に関する基礎知識':'聴覚','手話通訳の在り方':'手話通訳','国語':'国語'};
+  // Overall stats
+  const totalQ=WD.length,totalAns=WD.filter(q=>answered.has(q.id)).length,totalCor=WD.filter(q=>correct.has(q.id)).length;
+  let h=`<div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><p style="font-size:14px;font-weight:500;color:var(--green-600)">全体進捗</p><span style="font-size:13px;color:var(--text-secondary)">${totalAns}/${totalQ}問 回答済み</span></div>`;
+  const pctA=Math.round(totalAns/totalQ*100),pctC=Math.round(totalCor/totalQ*100);
+  h+=`<div class="pbar-w" style="height:8px;display:flex"><div style="width:${pctC}%;background:var(--green-200);border-radius:4px 0 0 4px;transition:width .3s"></div><div style="width:${pctA-pctC}%;background:var(--amber-100);transition:width .3s"></div><div style="flex:1;background:var(--bg-tertiary);border-radius:0 4px 4px 0"></div></div>`;
+  h+=`<div style="display:flex;justify-content:space-between;margin-top:6px"><span style="font-size:11px;color:var(--green-600)">${pctC}% 正解済み</span><span style="font-size:11px;color:var(--text-secondary)">${totalQ-totalAns}問 未回答</span></div></div>`;
+  // Per year
+  AY.forEach(year=>{
+    const tm=yearMap.get(year);
+    if(!tm)return;
+    const yQuestions=WD.filter(q=>q.year===year);
+    const yAns=yQuestions.filter(q=>answered.has(q.id)).length;
+    const yCor=yQuestions.filter(q=>correct.has(q.id)).length;
+    const yTotal=yQuestions.length;
+    const done=yCor===yTotal;
+    h+=`<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><p style="font-size:14px;font-weight:500">${year}</p>`;
+    if(done)h+=`<span style="font-size:12px;color:var(--green-600);font-weight:500">✓ 全問正解</span>`;
+    else h+=`<span style="font-size:12px;color:var(--text-secondary)">${yAns}/${yTotal}</span>`;
+    h+=`</div>`;
+    subjOrder.forEach(subj=>{
+      const qs=tm.get(subj);
+      if(!qs||!qs.length)return;
+      const total=qs.length,ansCnt=qs.filter(q=>answered.has(q.id)).length,corCnt=qs.filter(q=>correct.has(q.id)).length;
+      const pA=Math.round(ansCnt/total*100),pC=Math.round(corCnt/total*100);
+      const sn=subjShort[subj]||subj;
+      let statusTxt,statusColor;
+      if(corCnt===total){statusTxt='✓';statusColor='var(--green-600)';}
+      else if(ansCnt===0){statusTxt='—';statusColor='var(--text-secondary)';}
+      else{statusTxt=`${corCnt}/${total}`;statusColor='var(--text-secondary)';}
+      h+=`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><span style="font-size:12px">${sn}</span><span style="font-size:11px;font-weight:500;color:${statusColor}">${statusTxt}</span></div>`;
+      h+=`<div class="pbar-w" style="height:6px;display:flex"><div style="width:${pC}%;background:var(--green-200);border-radius:3px 0 0 3px;transition:width .3s"></div><div style="width:${pA-pC}%;background:var(--amber-100);transition:width .3s"></div><div style="flex:1;background:var(--bg-tertiary);border-radius:0 3px 3px 0"></div></div></div>`;
+    });
+    h+=`</div>`;
+  });
+  // Practical section
+  if(PD.length){
+    const pAns=PD.filter(q=>answered.has(q.id)).length;
+    h+=`<div class="card" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><p style="font-size:14px;font-weight:500">実技</p><span style="font-size:12px;color:var(--text-secondary)">${pAns}/${PD.length}</span></div>`;
+    PD.forEach(q=>{
+      const did=answered.has(q.id);
+      const icon=did?'<span style="color:var(--green-600)">✓</span>':'<span style="color:var(--text-secondary)">—</span>';
+      const label=`${q.year} ${q.type}`;
+      h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px"><span>${label}</span>${icon}</div>`;
+    });
+    h+=`</div>`;
+  }
+  document.getElementById('prog-body').innerHTML=h;
+}
 
 window.addEventListener('DOMContentLoaded',async()=>{const sa=localStorage.getItem('slt-a'),sp=localStorage.getItem('slt-p');if(sa==='1'&&sp){userPw=atob(sp);try{await loadXL();if(WD.length>0||PD.length>0){go('pg-top');return;}}catch(e){console.warn('auto-login failed',e);}}document.getElementById('ld').style.display='none';});
 </script>
